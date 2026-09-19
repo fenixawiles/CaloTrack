@@ -1,0 +1,27 @@
+{
+  "name": "calotrack",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Free, self-hosted calorie & weight tracker PWA. No paywalls, no account, your data stays yours.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "svelte": "^5.19.0",
+    "svelte-check": "^4.1.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11",
+    "vite-plugin-pwa": "^0.21.1"
+  },
+  "dependencies": {
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
+    "idb": "^8.0.1"
+  }
+}
