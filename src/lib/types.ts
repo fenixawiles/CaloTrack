@@ -76,6 +76,7 @@ export interface Settings {
   // Default false: a TDEE-based goal already includes an activity factor,
   // so adding exercise on top would double-count it.
   subtractExercise: boolean;
+  whoop?: WhoopConfig;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -125,5 +126,13 @@ export interface Workout {
   exercises: ExerciseEntry[];
   caloriesBurned?: number; // e.g. the WHOOP total for the session
   note?: string;
+  source?: 'manual' | 'whoop';
+  whoopId?: string; // WHOOP activity id, for de-duplication on sync
   loggedAt: number;
+}
+
+/** WHOOP connection config (safe to back up — holds no secrets or tokens). */
+export interface WhoopConfig {
+  clientId?: string;
+  proxyUrl?: string; // Cloudflare Worker base URL
 }

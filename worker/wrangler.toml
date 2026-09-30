@@ -1,0 +1,12 @@
+name = "calotrack-whoop"
+main = "whoop-proxy.js"
+compatibility_date = "2024-11-01"
+
+# Lock this to your app's origin once deployed (recommended), or use "*".
+# For GitHub Pages that's just the origin, no path:
+[vars]
+ALLOWED_ORIGIN = "https://fenixawiles.github.io"
+
+# Secrets are NOT stored here. Set them once with:
+#   npx wrangler secret put WHOOP_CLIENT_ID
+#   npx wrangler secret put WHOOP_CLIENT_SECRET

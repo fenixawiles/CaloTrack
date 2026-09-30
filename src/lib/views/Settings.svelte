@@ -4,8 +4,31 @@
   import type { Units, ThemePref } from '../types';
   import Modal from '../components/Modal.svelte';
   import { friendlyDate, toKey } from '../date';
+  import { beginAuth, isConnected, clearTokens } from '../whoop';
 
   const APP_VERSION = '1.0.0';
+
+  // ---- WHOOP ----
+  let whoopClientId = $state($settings.whoop?.clientId ?? '');
+  let whoopProxyUrl = $state($settings.whoop?.proxyUrl ?? '');
+  let whoopConnected = $state(isConnected());
+  const whoopConfigured = $derived(!!(whoopClientId.trim() && whoopProxyUrl.trim()));
+
+  async function saveWhoopConfig() {
+    await updateSettings({
+      whoop: { clientId: whoopClientId.trim(), proxyUrl: whoopProxyUrl.trim().replace(/\/+$/, '') }
+    });
+    toast('WHOOP settings saved', 'success');
+  }
+  async function connectWhoop() {
+    await saveWhoopConfig();
+    beginAuth({ clientId: whoopClientId.trim(), proxyUrl: whoopProxyUrl.trim() });
+  }
+  function disconnectWhoop() {
+    clearTokens();
+    whoopConnected = false;
+    toast('Disconnected from WHOOP', 'info');
+  }
 
   let fileInput: HTMLInputElement;
   let pendingText = $state<string | null>(null);
@@ -101,6 +124,35 @@
       <button class:active={$settings.theme === 'light'} onclick={() => setTheme('light')}>Light</button>
       <button class:active={$settings.theme === 'dark'} onclick={() => setTheme('dark')}>Dark</button>
     </div>
+  </div>
+
+  <!-- WHOOP -->
+  <div class="section-title">WHOOP sync</div>
+  <div class="card pad stack">
+    {#if whoopConnected}
+      <div class="spread">
+        <span class="row" style="gap:8px"><span class="dot-on"></span> Connected to WHOOP</span>
+        <button class="btn btn-danger" onclick={disconnectWhoop}>Disconnect</button>
+      </div>
+      <button class="btn btn-ghost btn-block" onclick={() => navigate('workouts')}>Go to Workouts to sync →</button>
+    {:else}
+      <p class="small muted" style="margin:0">
+        Auto-import workouts (with calorie burn) from WHOOP. Needs a free Cloudflare Worker that holds your
+        WHOOP secret — see <b>worker/README.md</b> for the 3-minute setup.
+      </p>
+      <div>
+        <label for="whoop-id">WHOOP Client ID</label>
+        <input id="whoop-id" bind:value={whoopClientId} placeholder="from developer.whoop.com" autocomplete="off" />
+      </div>
+      <div>
+        <label for="whoop-url">Worker URL</label>
+        <input id="whoop-url" bind:value={whoopProxyUrl} placeholder="https://calotrack-whoop.…workers.dev" autocomplete="off" inputmode="url" />
+      </div>
+      <div class="row" style="gap:10px">
+        <button class="btn btn-ghost" onclick={saveWhoopConfig} disabled={!whoopConfigured}>Save</button>
+        <button class="btn btn-primary" style="flex:1" onclick={connectWhoop} disabled={!whoopConfigured}>Connect WHOOP</button>
+      </div>
+    {/if}
   </div>
 
   <!-- Backup -->
@@ -228,5 +280,12 @@
     width: 22px;
     height: 22px;
     flex-shrink: 0;
+  }
+  .dot-on {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--success);
+    display: inline-block;
   }
 </style>

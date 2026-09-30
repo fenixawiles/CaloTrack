@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { selectedDate, routines, loadRoutines, dataVersion, bumpData, toast, navigate } from '../stores';
+  import { selectedDate, routines, loadRoutines, dataVersion, bumpData, toast, navigate, settings } from '../stores';
+  import { isConnected, syncRecentWorkouts } from '../whoop';
   import {
     getWorkoutsForDate,
     getAllWorkouts,
@@ -88,6 +89,24 @@
     }
   });
 
+  // ---- WHOOP sync ----
+  let whoopConnected = $state(isConnected());
+  let syncing = $state(false);
+  async function syncWhoop() {
+    if (!$settings.whoop) return;
+    syncing = true;
+    try {
+      const { added, updated } = await syncRecentWorkouts($settings.whoop, 30);
+      bumpData();
+      if (added || updated) toast(`Synced: ${added} new, ${updated} updated`, 'success');
+      else toast('Already up to date', 'info');
+    } catch (e) {
+      toast((e as Error).message || 'Sync failed', 'error');
+    } finally {
+      syncing = false;
+    }
+  }
+
   function summary(w: Workout): string {
     const parts: string[] = [];
     if (w.exercises.length) parts.push(`${w.exercises.length} exercise${w.exercises.length > 1 ? 's' : ''}`);
@@ -107,6 +126,13 @@
     <span class="muted small">Logging to</span>
     <input type="date" value={$selectedDate} max={todayKey()} onchange={(e) => selectedDate.set((e.target as HTMLInputElement).value)} style="width:auto;padding:8px 10px" />
   </div>
+
+  <!-- WHOOP sync -->
+  {#if whoopConnected}
+    <button class="btn btn-ghost btn-block whoop" onclick={syncWhoop} disabled={syncing}>
+      {syncing ? 'Syncing…' : '⌚ Sync from WHOOP'}
+    </button>
+  {/if}
 
   <!-- Routine quick-starts -->
   {#if $routines.length > 0}
@@ -169,6 +195,9 @@
 <style>
   .small {
     font-size: 12px;
+  }
+  .whoop {
+    margin-bottom: 14px;
   }
   .routines {
     display: flex;

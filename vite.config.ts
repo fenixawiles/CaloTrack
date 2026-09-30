@@ -7,6 +7,11 @@ const BASE = '/CaloTrack/';
 
 export default defineConfig({
   base: BASE,
+  // Build into docs/ so GitHub Pages can serve it via "Deploy from a branch".
+  build: {
+    outDir: 'docs',
+    emptyOutDir: true
+  },
   plugins: [
     svelte(),
     VitePWA({

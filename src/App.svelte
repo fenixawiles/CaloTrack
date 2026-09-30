@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { route, settings, loadAll, navigate } from './lib/stores';
+  import { route, settings, loadAll, navigate, toast } from './lib/stores';
   import { backupDue } from './lib/backup';
+  import { handleRedirectIfPresent } from './lib/whoop';
   import TabBar from './lib/components/TabBar.svelte';
   import Toasts from './lib/components/Toasts.svelte';
   import Today from './lib/views/Today.svelte';
@@ -21,6 +22,16 @@
     await loadAll();
     ready = true;
     showBackupNudge = backupDue($settings.lastBackupAt, $settings.backupReminderDays);
+
+    // Complete a WHOOP OAuth redirect, if we came back from one.
+    const whoopStatus = await handleRedirectIfPresent($settings.whoop);
+    if (whoopStatus === 'connected') {
+      toast('WHOOP connected 🎉', 'success');
+      navigate('workouts');
+    } else if (whoopStatus === 'error') {
+      toast('WHOOP connection failed — check your settings.', 'error');
+      navigate('settings');
+    }
   });
 </script>
 
