@@ -4,18 +4,28 @@
   import {
     getEntriesForDate,
     getAllEntries,
+    getWorkoutsForDate,
     saveEntry,
     deleteEntry,
     uid
   } from '../db';
-  import type { Entry, MealType } from '../types';
-  import { entryCalories, sumCalories, sumMacros, rollingAverage, daysLoggedIn } from '../nutrition';
+  import type { Entry, MealType, Workout } from '../types';
+  import {
+    entryCalories,
+    sumCalories,
+    sumMacros,
+    rollingAverage,
+    daysLoggedIn,
+    sumBurned,
+    effectiveTarget
+  } from '../nutrition';
   import CalorieRing from '../components/CalorieRing.svelte';
   import Modal from '../components/Modal.svelte';
   import NumberStepper from '../components/NumberStepper.svelte';
 
   let entries = $state<Entry[]>([]);
   let allEntries = $state<Entry[]>([]);
+  let workouts = $state<Workout[]>([]);
   let loading = $state(true);
 
   const meals: { id: MealType; label: string; icon: string }[] = [
@@ -29,6 +39,7 @@
     loading = true;
     entries = await getEntriesForDate($selectedDate);
     allEntries = await getAllEntries();
+    workouts = await getWorkoutsForDate($selectedDate);
     loading = false;
   }
 
@@ -40,7 +51,11 @@
   });
 
   const total = $derived(sumCalories(entries));
-  const target = $derived($currentGoal?.dailyCalorieTarget);
+  const baseTarget = $derived($currentGoal?.dailyCalorieTarget);
+  const burned = $derived(sumBurned(workouts));
+  const subtractExercise = $derived($settings.subtractExercise);
+  const target = $derived(effectiveTarget(baseTarget, burned, subtractExercise));
+  const net = $derived(total - burned);
   const macros = $derived(sumMacros(entries));
   const hasMacros = $derived((macros.protein ?? 0) + (macros.carbs ?? 0) + (macros.fat ?? 0) > 0);
 
@@ -100,6 +115,11 @@
     // stash the desired meal for the Add view
     sessionStorage.setItem('ct_meal', meal);
   }
+
+  function logWorkout() {
+    sessionStorage.setItem('ct_open_logger', '1');
+    navigate('workouts');
+  }
 </script>
 
 <div class="page fade-in">
@@ -133,6 +153,29 @@
       {/if}
     </div>
 
+    <!-- Energy balance: honest in / out / net -->
+    {#if burned > 0}
+      <div class="balance card">
+        <div class="bcell">
+          <div class="bval">{total.toLocaleString()}</div>
+          <div class="blab">in</div>
+        </div>
+        <div class="bop">−</div>
+        <div class="bcell">
+          <div class="bval burn">{burned.toLocaleString()}</div>
+          <div class="blab">🔥 burned</div>
+        </div>
+        <div class="bop">=</div>
+        <div class="bcell">
+          <div class="bval">{net.toLocaleString()}</div>
+          <div class="blab">net</div>
+        </div>
+      </div>
+      {#if !subtractExercise}
+        <div class="balnote faint">Your goal already accounts for activity, so burn is shown but doesn't change your budget.</div>
+      {/if}
+    {/if}
+
     <!-- Gentle encouragement, never shame -->
     <div class="encourage">
       {#if avg7 != null}
@@ -144,8 +187,28 @@
 
     <div class="quickrow">
       <button class="btn btn-primary" style="flex:1" onclick={() => addTo('snack')}>＋ Add food</button>
-      <button class="btn btn-ghost" onclick={copyYesterday}>Copy yesterday</button>
+      <button class="btn btn-ghost" style="flex:1" onclick={logWorkout}>🏋️ Log workout</button>
     </div>
+    <button class="btn btn-ghost btn-block copy" onclick={copyYesterday}>Copy yesterday's food</button>
+
+    <!-- Workouts for the day -->
+    {#if workouts.length > 0}
+      <div class="meal card workoutcard">
+        <div class="meal-head">
+          <span>🏋️ Workouts</span>
+          {#if burned > 0}<span class="mcal">🔥 {burned.toLocaleString()} kcal</span>{/if}
+        </div>
+        {#each workouts as w (w.id)}
+          <button class="entry" onclick={logWorkout}>
+            <span class="ename">
+              {w.name || 'Workout'}
+              {#if w.exercises.length}<span class="faint">· {w.exercises.length} ex</span>{/if}
+            </span>
+            <span class="ecal">{w.caloriesBurned ? w.caloriesBurned.toLocaleString() : '—'}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
 
     <!-- Meals -->
     {#if loading}
@@ -265,7 +328,50 @@
   .quickrow {
     display: flex;
     gap: 10px;
+    margin-bottom: 10px;
+  }
+  .copy {
     margin-bottom: 16px;
+    color: var(--text-dim);
+  }
+  .balance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+  }
+  .bcell {
+    text-align: center;
+    flex: 1;
+  }
+  .bval {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .bval.burn {
+    color: var(--warn);
+  }
+  .blab {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .bop {
+    font-size: 18px;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 0 4px;
+  }
+  .balnote {
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 14px;
+    padding: 0 8px;
+    line-height: 1.4;
+  }
+  .workoutcard {
+    margin-bottom: 12px;
   }
   .meals {
     display: flex;

@@ -15,12 +15,22 @@ data stays on your device.
   and favorites for fast re-use.
 - **Trends** — daily bar chart (30/90 days), rolling averages, **monthly cumulative totals +
   daily averages**, and a consistency heatmap.
+- **Workouts & routines** — log a session with its exercises (sets/reps/load) and a total
+  calorie burn (e.g. from WHOOP). Save any set of exercises as a reusable **routine**
+  (like "Strength B") and load the whole thing in one tap next time. Detail is always
+  optional — log just a name and a burn if that's all you want.
 - **Weight tracking** — log weigh-ins, see the trend line and progress toward a goal.
 - **Goals** — set a daily calorie target and a weight goal, with an optional **TDEE/BMR
   estimator** (Mifflin–St Jeor).
 - **Backup & restore** — one-tap JSON export/import with gentle reminders. Your data is
   portable and yours.
 - **Offline-first PWA** — installable to your home screen, works with no connection.
+
+### Honest energy balance
+Exercise is tracked and shown as an honest **in − out = net**, but by default it does **not**
+inflate your calorie budget — because a TDEE-based goal already includes an activity factor,
+so adding it again would double-count. A toggle in Settings turns on the net-budget behavior
+for those working from a sedentary/BMR baseline.
 
 ### Designed to be kind
 Progress is framed around **rolling averages** and **days logged**, never broken streaks or

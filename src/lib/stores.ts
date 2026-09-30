@@ -1,16 +1,26 @@
 import { writable, get } from 'svelte/store';
-import type { Settings, Food, Goal } from './types';
+import type { Settings, Food, Goal, Routine } from './types';
 import { DEFAULT_SETTINGS } from './types';
-import { getSettings, saveSettings, getFoods, getCurrentGoal } from './db';
+import { getSettings, saveSettings, getFoods, getCurrentGoal, getRoutines } from './db';
 import { todayKey } from './date';
 
-export type Route = 'today' | 'add' | 'foods' | 'trends' | 'weight' | 'goals' | 'settings';
+export type Route =
+  | 'today'
+  | 'add'
+  | 'foods'
+  | 'trends'
+  | 'weight'
+  | 'goals'
+  | 'settings'
+  | 'workouts'
+  | 'routines';
 
 export const route = writable<Route>('today');
 export const selectedDate = writable<string>(todayKey());
 
 export const settings = writable<Settings>({ ...DEFAULT_SETTINGS });
 export const foods = writable<Food[]>([]);
+export const routines = writable<Routine[]>([]);
 export const currentGoal = writable<Goal | undefined>(undefined);
 
 // Bumped whenever entries/weights change so views can re-query.
@@ -35,12 +45,16 @@ export async function loadFoods() {
   foods.set(await getFoods());
 }
 
+export async function loadRoutines() {
+  routines.set(await getRoutines());
+}
+
 export async function loadGoal() {
   currentGoal.set(await getCurrentGoal());
 }
 
 export async function loadAll() {
-  await Promise.all([loadSettings(), loadFoods(), loadGoal()]);
+  await Promise.all([loadSettings(), loadFoods(), loadRoutines(), loadGoal()]);
 }
 
 // ---------- Theme ----------

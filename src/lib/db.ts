@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { Food, Entry, WeightRecord, Goal, Settings } from './types';
+import type { Food, Entry, WeightRecord, Goal, Settings, Workout, Routine } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
 interface CaloTrackDB extends DBSchema {
@@ -23,6 +23,16 @@ interface CaloTrackDB extends DBSchema {
     value: Goal;
     indexes: { byActiveFrom: string };
   };
+  workouts: {
+    key: string;
+    value: Workout;
+    indexes: { byDate: string };
+  };
+  routines: {
+    key: string;
+    value: Routine;
+    indexes: { byName: string };
+  };
   settings: {
     key: string;
     value: Settings;
@@ -30,7 +40,7 @@ interface CaloTrackDB extends DBSchema {
 }
 
 const DB_NAME = 'calotrack';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<CaloTrackDB>> | null = null;
 
@@ -55,6 +65,14 @@ export function getDB(): Promise<IDBPDatabase<CaloTrackDB>> {
         if (!db.objectStoreNames.contains('goals')) {
           const goals = db.createObjectStore('goals', { keyPath: 'id' });
           goals.createIndex('byActiveFrom', 'activeFrom');
+        }
+        if (!db.objectStoreNames.contains('workouts')) {
+          const workouts = db.createObjectStore('workouts', { keyPath: 'id' });
+          workouts.createIndex('byDate', 'date');
+        }
+        if (!db.objectStoreNames.contains('routines')) {
+          const routines = db.createObjectStore('routines', { keyPath: 'id' });
+          routines.createIndex('byName', 'name');
         }
         if (!db.objectStoreNames.contains('settings')) {
           db.createObjectStore('settings', { keyPath: 'id' });
@@ -196,17 +214,58 @@ export async function deleteGoal(id: string): Promise<void> {
   await db.delete('goals', id);
 }
 
+// ---------- Workouts ----------
+export async function getWorkoutsForDate(date: string): Promise<Workout[]> {
+  const db = await getDB();
+  const rows = await db.getAllFromIndex('workouts', 'byDate', date);
+  return rows.sort((a, b) => a.loggedAt - b.loggedAt);
+}
+
+export async function getAllWorkouts(): Promise<Workout[]> {
+  const db = await getDB();
+  return db.getAll('workouts');
+}
+
+export async function saveWorkout(w: Workout): Promise<void> {
+  const db = await getDB();
+  await db.put('workouts', w);
+}
+
+export async function deleteWorkout(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('workouts', id);
+}
+
+// ---------- Routines (workout templates) ----------
+export async function getRoutines(): Promise<Routine[]> {
+  const db = await getDB();
+  const all = await db.getAll('routines');
+  return all.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function saveRoutine(r: Routine): Promise<void> {
+  const db = await getDB();
+  await db.put('routines', r);
+}
+
+export async function deleteRoutine(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('routines', id);
+}
+
 // ---------- Bulk (backup/restore) ----------
 export async function exportAll() {
   const db = await getDB();
-  const [foods, entries, weights, goals, settings] = await Promise.all([
+  const [foods, entries, weights, goals, workouts, routines, settings] = await Promise.all([
     db.getAll('foods'),
     db.getAll('entries'),
     db.getAll('weights'),
     db.getAll('goals'),
+    db.getAll('workouts'),
+    db.getAll('routines'),
     db.get('settings', 'settings')
   ]);
-  return { foods, entries, weights, goals, settings };
+  return { foods, entries, weights, goals, workouts, routines, settings };
 }
 
 export interface ImportData {
@@ -214,24 +273,33 @@ export interface ImportData {
   entries?: Entry[];
   weights?: WeightRecord[];
   goals?: Goal[];
+  workouts?: Workout[];
+  routines?: Routine[];
   settings?: Settings;
 }
 
 export async function importAll(data: ImportData, mode: 'replace' | 'merge'): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['foods', 'entries', 'weights', 'goals', 'settings'], 'readwrite');
+  const tx = db.transaction(
+    ['foods', 'entries', 'weights', 'goals', 'workouts', 'routines', 'settings'],
+    'readwrite'
+  );
   if (mode === 'replace') {
     await Promise.all([
       tx.objectStore('foods').clear(),
       tx.objectStore('entries').clear(),
       tx.objectStore('weights').clear(),
-      tx.objectStore('goals').clear()
+      tx.objectStore('goals').clear(),
+      tx.objectStore('workouts').clear(),
+      tx.objectStore('routines').clear()
     ]);
   }
   for (const f of data.foods ?? []) await tx.objectStore('foods').put(f);
   for (const e of data.entries ?? []) await tx.objectStore('entries').put(e);
   for (const w of data.weights ?? []) await tx.objectStore('weights').put(w);
   for (const g of data.goals ?? []) await tx.objectStore('goals').put(g);
+  for (const wk of data.workouts ?? []) await tx.objectStore('workouts').put(wk);
+  for (const r of data.routines ?? []) await tx.objectStore('routines').put(r);
   if (data.settings) await tx.objectStore('settings').put(data.settings);
   await tx.done;
 }

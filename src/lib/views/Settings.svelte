@@ -61,8 +61,27 @@
   <div class="card links">
     <button class="link" onclick={() => navigate('goals')}><span>🎯 Goals & targets</span><span class="chev">›</span></button>
     <button class="link" onclick={() => navigate('weight')}><span>⚖️ Weight tracking</span><span class="chev">›</span></button>
+    <button class="link" onclick={() => navigate('workouts')}><span>🏋️ Workouts</span><span class="chev">›</span></button>
+    <button class="link" onclick={() => navigate('routines')}><span>🔁 Routines</span><span class="chev">›</span></button>
     <button class="link" onclick={() => navigate('foods')}><span>🍎 Food library</span><span class="chev">›</span></button>
     <button class="link" onclick={() => navigate('trends')}><span>📈 Trends & history</span><span class="chev">›</span></button>
+  </div>
+
+  <!-- Exercise -->
+  <div class="section-title">Exercise</div>
+  <div class="card pad">
+    <label class="switch">
+      <span class="switch-text">
+        <span class="switch-title">Add exercise to my budget</span>
+        <span class="small muted">When on, burned calories add back to your daily target (net view).</span>
+      </span>
+      <input type="checkbox" checked={$settings.subtractExercise} onchange={(e) => updateSettings({ subtractExercise: (e.target as HTMLInputElement).checked })} />
+    </label>
+    <p class="small muted" style="margin:12px 0 0">
+      Most honest default is <b>off</b>: if you set your calorie goal with an activity level (TDEE),
+      exercise is already counted — adding it again double-counts it. Turn this on only if your goal is
+      set at a sedentary/BMR baseline.
+    </p>
   </div>
 
   <!-- Units -->
@@ -187,5 +206,27 @@
     background: var(--surface);
     color: var(--text);
     box-shadow: var(--shadow);
+  }
+  .switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 0;
+  }
+  .switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .switch-title {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 15px;
+  }
+  .switch input {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
   }
 </style>

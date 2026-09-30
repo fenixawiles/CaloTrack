@@ -1,4 +1,4 @@
-import type { Entry, Macros, Profile, ActivityLevel, Sex } from './types';
+import type { Entry, Macros, Profile, ActivityLevel, Sex, Workout } from './types';
 import { lastNDays, monthKey } from './date';
 
 export function entryCalories(e: Entry): number {
@@ -104,6 +104,34 @@ export function cumulativeForMonth(entries: Entry[], mk: string): { date: string
     running += byDate.get(date) ?? 0;
     return { date, cumulative: running };
   });
+}
+
+// ---------- Exercise / burn ----------
+export function burnedByDate(workouts: Workout[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const w of workouts) {
+    if (!w.caloriesBurned) continue;
+    map.set(w.date, (map.get(w.date) ?? 0) + w.caloriesBurned);
+  }
+  return map;
+}
+
+export function sumBurned(workouts: Workout[]): number {
+  return workouts.reduce((t, w) => t + (w.caloriesBurned ?? 0), 0);
+}
+
+/**
+ * Effective calorie budget for a day. When subtractExercise is on, burned
+ * calories are added back onto the target (net view). Otherwise the target
+ * stands alone, because a TDEE-based goal already includes activity.
+ */
+export function effectiveTarget(
+  target: number | undefined,
+  burned: number,
+  subtractExercise: boolean
+): number | undefined {
+  if (target == null) return undefined;
+  return subtractExercise ? target + burned : target;
 }
 
 // ---------- TDEE / BMR (Mifflin–St Jeor) ----------

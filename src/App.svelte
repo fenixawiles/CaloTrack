@@ -11,6 +11,8 @@
   import Weight from './lib/views/Weight.svelte';
   import Goals from './lib/views/Goals.svelte';
   import Settings from './lib/views/Settings.svelte';
+  import Workouts from './lib/views/Workouts.svelte';
+  import Routines from './lib/views/Routines.svelte';
 
   let ready = $state(false);
   let showBackupNudge = $state(false);
@@ -46,6 +48,10 @@
       <Weight />
     {:else if $route === 'goals'}
       <Goals />
+    {:else if $route === 'workouts'}
+      <Workouts />
+    {:else if $route === 'routines'}
+      <Routines />
     {:else if $route === 'settings'}
       <Settings />
     {/if}

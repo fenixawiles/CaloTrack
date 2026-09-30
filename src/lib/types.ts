@@ -72,6 +72,10 @@ export interface Settings {
   backupReminderDays: number; // 0 = never
   lastBackupAt?: number;
   onboarded?: boolean;
+  // When true, logged exercise calories add back to the daily budget.
+  // Default false: a TDEE-based goal already includes an activity factor,
+  // so adding exercise on top would double-count it.
+  subtractExercise: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -79,5 +83,47 @@ export const DEFAULT_SETTINGS: Settings = {
   units: 'imperial',
   theme: 'system',
   profile: {},
-  backupReminderDays: 14
+  backupReminderDays: 14,
+  subtractExercise: false
 };
+
+// ---------- Exercise / workouts ----------
+export type WeightUnit = 'kg' | 'lb';
+
+/** One exercise inside a logged workout. All detail fields are optional. */
+export interface ExerciseEntry {
+  name: string;
+  sets?: number;
+  reps?: number; // reps per set
+  weight?: number; // load, stored in the unit it was entered in
+  weightUnit?: WeightUnit;
+}
+
+/** A reusable workout template, e.g. "Strength B" = a fixed list of exercises. */
+export interface RoutineExercise {
+  name: string;
+  sets?: number;
+  reps?: number;
+  weight?: number;
+  weightUnit?: WeightUnit;
+}
+
+export interface Routine {
+  id: string;
+  name: string;
+  exercises: RoutineExercise[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** A logged workout session. Exercises and burn are all optional. */
+export interface Workout {
+  id: string;
+  date: string; // YYYY-MM-DD (local)
+  name?: string; // e.g. "Strength B", or a freeform label
+  routineId?: string; // if started from a routine
+  exercises: ExerciseEntry[];
+  caloriesBurned?: number; // e.g. the WHOOP total for the session
+  note?: string;
+  loggedAt: number;
+}
