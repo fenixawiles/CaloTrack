@@ -4,9 +4,20 @@
   import type { Units, ThemePref } from '../types';
   import Modal from '../components/Modal.svelte';
   import { friendlyDate, toKey } from '../date';
-  import { beginAuth, isConnected, clearTokens } from '../whoop';
+  import { beginAuth, isConnected, clearTokens, redirectUri } from '../whoop';
 
   const APP_VERSION = '1.0.0';
+
+  const oauthRedirect = redirectUri();
+  const privacyUrl = `${redirectUri()}privacy.html`;
+  async function copy(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Copied', 'success');
+    } catch {
+      toast(text, 'info');
+    }
+  }
 
   // ---- WHOOP ----
   let whoopClientId = $state($settings.whoop?.clientId ?? '');
@@ -152,6 +163,15 @@
         <button class="btn btn-ghost" onclick={saveWhoopConfig} disabled={!whoopConfigured}>Save</button>
         <button class="btn btn-primary" style="flex:1" onclick={connectWhoop} disabled={!whoopConfigured}>Connect WHOOP</button>
       </div>
+
+      <div class="copyfield">
+        <span class="small muted">Redirect URL (paste into your WHOOP app)</span>
+        <button class="copyrow" onclick={() => copy(oauthRedirect)}><code>{oauthRedirect}</code><span class="cp">Copy</span></button>
+      </div>
+      <div class="copyfield">
+        <span class="small muted">Privacy Policy URL (paste into your WHOOP app)</span>
+        <button class="copyrow" onclick={() => copy(privacyUrl)}><code>{privacyUrl}</code><span class="cp">Copy</span></button>
+      </div>
     {/if}
   </div>
 
@@ -188,6 +208,7 @@
       Free and yours. No accounts, no ads, no paywalls — every feature is here for good. Nutrition lookups come from the open
       <b>Open Food Facts</b> database. Missing a day is completely fine; consistency over time is what counts.
     </p>
+    <a class="privacy" href={privacyUrl} target="_blank" rel="noopener">Privacy policy →</a>
   </div>
 </div>
 
@@ -287,5 +308,40 @@
     border-radius: 999px;
     background: var(--success);
     display: inline-block;
+  }
+  .copyfield {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .copyrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .copyrow code {
+    font-size: 12px;
+    word-break: break-all;
+    color: var(--text);
+  }
+  .cp {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .privacy {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
   }
 </style>

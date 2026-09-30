@@ -12,7 +12,7 @@ function describe(err: unknown): string {
 }
 
 window.addEventListener('unhandledrejection', (e) => {
-  toast(`Couldn't save: ${describe(e.reason)}`, 'error');
+  toast(describe(e.reason), 'error');
 });
 window.addEventListener('error', (e) => {
   if (e.message) toast(`Error: ${e.message}`, 'error');

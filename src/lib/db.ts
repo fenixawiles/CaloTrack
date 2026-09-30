@@ -1,114 +1,38 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Food, Entry, WeightRecord, Goal, Settings, Workout, Routine } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
-interface CaloTrackDB extends DBSchema {
-  foods: {
-    key: string;
-    value: Food;
-    indexes: { byName: string; byBarcode: string };
-  };
-  entries: {
-    key: string;
-    value: Entry;
-    indexes: { byDate: string; byFood: string };
-  };
-  weights: {
-    key: string;
-    value: WeightRecord;
-    indexes: { byDate: string };
-  };
-  goals: {
-    key: string;
-    value: Goal;
-    indexes: { byActiveFrom: string };
-  };
-  workouts: {
-    key: string;
-    value: Workout;
-    indexes: { byDate: string };
-  };
-  routines: {
-    key: string;
-    value: Routine;
-    indexes: { byName: string };
-  };
-  settings: {
-    key: string;
-    value: Settings;
-  };
+// Storage engine: localStorage.
+//
+// We deliberately do NOT use IndexedDB. Installed iOS home-screen apps
+// (standalone PWAs) have long-standing WebKit bugs where IndexedDB writes hang
+// or fail silently, which made every "save" appear dead. The data here is small
+// (personal food/workout logs — well under localStorage's ~5MB budget), so a
+// synchronous JSON-in-localStorage store is both simpler and far more reliable.
+// The async function signatures are kept so the rest of the app is unchanged.
+
+const NS = 'ct_';
+
+function readArr<T>(key: string): T[] {
+  try {
+    const raw = localStorage.getItem(NS + key);
+    if (!raw) return [];
+    const val = JSON.parse(raw);
+    return Array.isArray(val) ? (val as T[]) : [];
+  } catch {
+    return [];
+  }
 }
 
-const DB_NAME = 'calotrack';
-const DB_VERSION = 2;
-
-let dbPromise: Promise<IDBPDatabase<CaloTrackDB>> | null = null;
-
-function openWithTimeout(): Promise<IDBPDatabase<CaloTrackDB>> {
-  const open = openDB<CaloTrackDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      buildStores(db);
-    },
-    blocked() {
-      // Another tab holds an older version open, blocking the upgrade.
-      console.warn('IndexedDB upgrade blocked by another open tab.');
-    },
-    blocking() {
-      // We are blocking another tab's upgrade — close so it can proceed.
-      // (Handled per-connection below.)
-    },
-    terminated() {
-      dbPromise = null; // allow re-open after unexpected close (iOS can do this)
-    }
-  });
-
-  // Some WebKit/iOS states leave open() pending forever (e.g. a blocked
-  // version change). Fail loudly instead of leaving writes hanging silently.
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Storage is taking too long to open. Close other CaloTrack tabs and reload.')), 10000)
-  );
-
-  return Promise.race([open, timeout]).catch((err) => {
-    dbPromise = null; // let the next call retry
-    throw err;
-  });
+function writeArr<T>(key: string, value: T[]): void {
+  // A quota error here throws and is surfaced by the global handler.
+  localStorage.setItem(NS + key, JSON.stringify(value));
 }
 
-export function getDB(): Promise<IDBPDatabase<CaloTrackDB>> {
-  if (!dbPromise) dbPromise = openWithTimeout();
-  return dbPromise;
-}
-
-function buildStores(db: IDBPDatabase<CaloTrackDB>) {
-  if (!db.objectStoreNames.contains('foods')) {
-    const foods = db.createObjectStore('foods', { keyPath: 'id' });
-    foods.createIndex('byName', 'name');
-    foods.createIndex('byBarcode', 'barcode');
-  }
-  if (!db.objectStoreNames.contains('entries')) {
-    const entries = db.createObjectStore('entries', { keyPath: 'id' });
-    entries.createIndex('byDate', 'date');
-    entries.createIndex('byFood', 'foodId');
-  }
-  if (!db.objectStoreNames.contains('weights')) {
-    const weights = db.createObjectStore('weights', { keyPath: 'id' });
-    weights.createIndex('byDate', 'date');
-  }
-  if (!db.objectStoreNames.contains('goals')) {
-    const goals = db.createObjectStore('goals', { keyPath: 'id' });
-    goals.createIndex('byActiveFrom', 'activeFrom');
-  }
-  if (!db.objectStoreNames.contains('workouts')) {
-    const workouts = db.createObjectStore('workouts', { keyPath: 'id' });
-    workouts.createIndex('byDate', 'date');
-  }
-  if (!db.objectStoreNames.contains('routines')) {
-    const routines = db.createObjectStore('routines', { keyPath: 'id' });
-    routines.createIndex('byName', 'name');
-  }
-  if (!db.objectStoreNames.contains('settings')) {
-    db.createObjectStore('settings', { keyPath: 'id' });
-  }
+function upsert<T extends { id: string }>(arr: T[], item: T): T[] {
+  const i = arr.findIndex((x) => x.id === item.id);
+  if (i >= 0) arr[i] = item;
+  else arr.push(item);
+  return arr;
 }
 
 export function uid(): string {
@@ -120,75 +44,72 @@ export function uid(): string {
 
 // ---------- Settings ----------
 export async function getSettings(): Promise<Settings> {
-  const db = await getDB();
-  const s = await db.get('settings', 'settings');
+  let s: Settings | null = null;
+  try {
+    const raw = localStorage.getItem(NS + 'settings');
+    if (raw) s = JSON.parse(raw) as Settings;
+  } catch {
+    s = null;
+  }
   if (!s) {
-    await db.put('settings', DEFAULT_SETTINGS);
+    await saveSettings(DEFAULT_SETTINGS);
     return { ...DEFAULT_SETTINGS };
   }
-  // Merge in any new default fields added by later versions.
   return { ...DEFAULT_SETTINGS, ...s, profile: { ...DEFAULT_SETTINGS.profile, ...s.profile } };
 }
 
 export async function saveSettings(s: Settings): Promise<void> {
-  const db = await getDB();
-  await db.put('settings', s);
+  localStorage.setItem(NS + 'settings', JSON.stringify(s));
 }
 
 // ---------- Foods ----------
 export async function getFoods(): Promise<Food[]> {
-  const db = await getDB();
-  const all = await db.getAll('foods');
-  return all.sort((a, b) => a.name.localeCompare(b.name));
+  return readArr<Food>('foods').sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getFood(id: string): Promise<Food | undefined> {
-  const db = await getDB();
-  return db.get('foods', id);
+  return readArr<Food>('foods').find((f) => f.id === id);
 }
 
 export async function findFoodByBarcode(barcode: string): Promise<Food | undefined> {
-  const db = await getDB();
-  return db.getFromIndex('foods', 'byBarcode', barcode);
+  return readArr<Food>('foods').find((f) => f.barcode === barcode);
 }
 
 export async function saveFood(food: Food): Promise<void> {
-  const db = await getDB();
-  await db.put('foods', food);
+  writeArr('foods', upsert(readArr<Food>('foods'), food));
 }
 
 export async function deleteFood(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('foods', id);
+  writeArr(
+    'foods',
+    readArr<Food>('foods').filter((f) => f.id !== id)
+  );
 }
 
 // ---------- Entries ----------
 export async function getEntriesForDate(date: string): Promise<Entry[]> {
-  const db = await getDB();
-  const rows = await db.getAllFromIndex('entries', 'byDate', date);
-  return rows.sort((a, b) => a.loggedAt - b.loggedAt);
+  return readArr<Entry>('entries')
+    .filter((e) => e.date === date)
+    .sort((a, b) => a.loggedAt - b.loggedAt);
 }
 
 export async function getAllEntries(): Promise<Entry[]> {
-  const db = await getDB();
-  return db.getAll('entries');
+  return readArr<Entry>('entries');
 }
 
 export async function saveEntry(entry: Entry): Promise<void> {
-  const db = await getDB();
-  await db.put('entries', entry);
+  writeArr('entries', upsert(readArr<Entry>('entries'), entry));
 }
 
 export async function deleteEntry(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('entries', id);
+  writeArr(
+    'entries',
+    readArr<Entry>('entries').filter((e) => e.id !== id)
+  );
 }
 
-/** Distinct foods logged recently, most-recent first, for quick re-add. */
 export async function getRecentEntryNames(limit = 20): Promise<Entry[]> {
-  const db = await getDB();
-  const all = await db.getAll('entries');
-  all.sort((a, b) => b.loggedAt - a.loggedAt);
+  const all = readArr<Entry>('entries').sort((a, b) => b.loggedAt - a.loggedAt);
   const seen = new Set<string>();
   const out: Entry[] = [];
   for (const e of all) {
@@ -203,97 +124,97 @@ export async function getRecentEntryNames(limit = 20): Promise<Entry[]> {
 
 // ---------- Weights ----------
 export async function getWeights(): Promise<WeightRecord[]> {
-  const db = await getDB();
-  const all = await db.getAll('weights');
-  return all.sort((a, b) => a.date.localeCompare(b.date));
+  return readArr<WeightRecord>('weights').sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function saveWeight(w: WeightRecord): Promise<void> {
-  const db = await getDB();
-  await db.put('weights', w);
+  writeArr('weights', upsert(readArr<WeightRecord>('weights'), w));
 }
 
 export async function deleteWeight(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('weights', id);
+  writeArr(
+    'weights',
+    readArr<WeightRecord>('weights').filter((w) => w.id !== id)
+  );
 }
 
 // ---------- Goals ----------
 export async function getGoals(): Promise<Goal[]> {
-  const db = await getDB();
-  const all = await db.getAll('goals');
-  return all.sort((a, b) => a.activeFrom.localeCompare(b.activeFrom));
+  return readArr<Goal>('goals').sort((a, b) => a.activeFrom.localeCompare(b.activeFrom));
 }
 
-/** The goal in effect (latest activeFrom on or before today). */
 export async function getCurrentGoal(): Promise<Goal | undefined> {
   const goals = await getGoals();
-  if (goals.length === 0) return undefined;
-  return goals[goals.length - 1];
+  return goals.length ? goals[goals.length - 1] : undefined;
 }
 
 export async function saveGoal(g: Goal): Promise<void> {
-  const db = await getDB();
-  await db.put('goals', g);
+  writeArr('goals', upsert(readArr<Goal>('goals'), g));
 }
 
 export async function deleteGoal(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('goals', id);
+  writeArr(
+    'goals',
+    readArr<Goal>('goals').filter((g) => g.id !== id)
+  );
 }
 
 // ---------- Workouts ----------
 export async function getWorkoutsForDate(date: string): Promise<Workout[]> {
-  const db = await getDB();
-  const rows = await db.getAllFromIndex('workouts', 'byDate', date);
-  return rows.sort((a, b) => a.loggedAt - b.loggedAt);
+  return readArr<Workout>('workouts')
+    .filter((w) => w.date === date)
+    .sort((a, b) => a.loggedAt - b.loggedAt);
 }
 
 export async function getAllWorkouts(): Promise<Workout[]> {
-  const db = await getDB();
-  return db.getAll('workouts');
+  return readArr<Workout>('workouts');
 }
 
 export async function saveWorkout(w: Workout): Promise<void> {
-  const db = await getDB();
-  await db.put('workouts', w);
+  writeArr('workouts', upsert(readArr<Workout>('workouts'), w));
 }
 
 export async function deleteWorkout(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('workouts', id);
+  writeArr(
+    'workouts',
+    readArr<Workout>('workouts').filter((w) => w.id !== id)
+  );
 }
 
-// ---------- Routines (workout templates) ----------
+// ---------- Routines ----------
 export async function getRoutines(): Promise<Routine[]> {
-  const db = await getDB();
-  const all = await db.getAll('routines');
-  return all.sort((a, b) => a.name.localeCompare(b.name));
+  return readArr<Routine>('routines').sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function saveRoutine(r: Routine): Promise<void> {
-  const db = await getDB();
-  await db.put('routines', r);
+  writeArr('routines', upsert(readArr<Routine>('routines'), r));
 }
 
 export async function deleteRoutine(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('routines', id);
+  writeArr(
+    'routines',
+    readArr<Routine>('routines').filter((r) => r.id !== id)
+  );
 }
 
 // ---------- Bulk (backup/restore) ----------
 export async function exportAll() {
-  const db = await getDB();
-  const [foods, entries, weights, goals, workouts, routines, settings] = await Promise.all([
-    db.getAll('foods'),
-    db.getAll('entries'),
-    db.getAll('weights'),
-    db.getAll('goals'),
-    db.getAll('workouts'),
-    db.getAll('routines'),
-    db.get('settings', 'settings')
-  ]);
-  return { foods, entries, weights, goals, workouts, routines, settings };
+  return {
+    foods: readArr<Food>('foods'),
+    entries: readArr<Entry>('entries'),
+    weights: readArr<WeightRecord>('weights'),
+    goals: readArr<Goal>('goals'),
+    workouts: readArr<Workout>('workouts'),
+    routines: readArr<Routine>('routines'),
+    settings: (() => {
+      try {
+        const raw = localStorage.getItem(NS + 'settings');
+        return raw ? (JSON.parse(raw) as Settings) : undefined;
+      } catch {
+        return undefined;
+      }
+    })()
+  };
 }
 
 export interface ImportData {
@@ -307,27 +228,16 @@ export interface ImportData {
 }
 
 export async function importAll(data: ImportData, mode: 'replace' | 'merge'): Promise<void> {
-  const db = await getDB();
-  const tx = db.transaction(
-    ['foods', 'entries', 'weights', 'goals', 'workouts', 'routines', 'settings'],
-    'readwrite'
-  );
-  if (mode === 'replace') {
-    await Promise.all([
-      tx.objectStore('foods').clear(),
-      tx.objectStore('entries').clear(),
-      tx.objectStore('weights').clear(),
-      tx.objectStore('goals').clear(),
-      tx.objectStore('workouts').clear(),
-      tx.objectStore('routines').clear()
-    ]);
+  const tables: (keyof ImportData)[] = ['foods', 'entries', 'weights', 'goals', 'workouts', 'routines'];
+  for (const t of tables) {
+    const incoming = (data[t] as { id: string }[] | undefined) ?? [];
+    if (mode === 'replace') {
+      writeArr(t, incoming);
+    } else {
+      const existing = readArr<{ id: string }>(t);
+      for (const item of incoming) upsert(existing, item);
+      writeArr(t, existing);
+    }
   }
-  for (const f of data.foods ?? []) await tx.objectStore('foods').put(f);
-  for (const e of data.entries ?? []) await tx.objectStore('entries').put(e);
-  for (const w of data.weights ?? []) await tx.objectStore('weights').put(w);
-  for (const g of data.goals ?? []) await tx.objectStore('goals').put(g);
-  for (const wk of data.workouts ?? []) await tx.objectStore('workouts').put(wk);
-  for (const r of data.routines ?? []) await tx.objectStore('routines').put(r);
-  if (data.settings) await tx.objectStore('settings').put(data.settings);
-  await tx.done;
+  if (data.settings) await saveSettings(data.settings);
 }

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CaloTrack — Privacy Policy</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; line-height: 1.6;
+        color: #1a1a1e; background: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) { body { color: #ececee; background: #0d0d0f; } a { color: #4a9d88; } }
+      h1 { font-size: 26px; margin: 0 0 4px; }
+      h2 { font-size: 18px; margin: 28px 0 8px; }
+      .date { color: #6b6b73; font-size: 14px; margin-bottom: 20px; }
+      a { color: #2f7a68; }
+      code { background: rgba(127,127,127,.15); padding: 1px 5px; border-radius: 4px; font-size: 90%; }
+      ul { padding-left: 20px; }
+    </style>
+  </head>
+  <body>
+    <h1>CaloTrack Privacy Policy</h1>
+    <div class="date">Last updated: 30 September 2026</div>
+
+    <p>
+      CaloTrack is a free, open calorie and fitness tracker. It is built to respect your privacy
+      completely: <strong>all of your data stays on your own device.</strong> There is no account,
+      no CaloTrack server, no analytics, no advertising, and no tracking.
+    </p>
+
+    <h2>What data CaloTrack stores</h2>
+    <p>
+      Everything you enter — food entries, your food library, weight, goals, workouts, routines,
+      and settings — is stored locally in your browser's storage on the device you use. It is never
+      transmitted to us, because there is no “us” server to transmit it to.
+    </p>
+
+    <h2>WHOOP (optional)</h2>
+    <p>
+      If you choose to connect WHOOP, CaloTrack uses WHOOP's official API to import your workouts.
+      Authentication happens through a small proxy (a Cloudflare Worker) that <em>you</em> deploy and
+      control; it holds only your WHOOP application secret and stores no data. Your WHOOP access
+      tokens are kept on your device. Imported workout data (such as calories burned and sport type)
+      is stored locally alongside your other data and is not shared with anyone.
+    </p>
+
+    <h2>Open Food Facts</h2>
+    <p>
+      When you scan or enter a barcode, CaloTrack looks it up in the free public
+      <a href="https://world.openfoodfacts.org" rel="noopener">Open Food Facts</a> database. Only the
+      barcode number is sent to their service to retrieve product information. See their own privacy
+      practices on their website.
+    </p>
+
+    <h2>Backups</h2>
+    <p>
+      You can export your data to a JSON file at any time. Those files are created by and remain under
+      your control; CaloTrack does not upload them anywhere.
+    </p>
+
+    <h2>Data deletion</h2>
+    <p>
+      Because your data lives only on your device, you can remove it entirely at any time by clearing
+      the site's data in your browser settings, or by uninstalling the app from your home screen.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      Any updates to this policy will be published on this page.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      CaloTrack is an open-source personal project. Questions or issues can be raised on the project's
+      repository at <a href="https://github.com/fenixawiles/CaloTrack" rel="noopener">github.com/fenixawiles/CaloTrack</a>.
+    </p>
+  </body>
+</html>
