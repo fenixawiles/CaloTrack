@@ -40,6 +40,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // Take control immediately and drop old caches so a new deploy never
+        // leaves a stale/blank shell behind.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        navigateFallback: `${BASE}index.html`,
         runtimeCaching: [
           {
             // Open Food Facts lookups: use network, fall back to cache when offline.
