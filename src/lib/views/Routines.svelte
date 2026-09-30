@@ -3,6 +3,7 @@
   import { saveRoutine, deleteRoutine, uid } from '../db';
   import type { Routine, RoutineExercise, WeightUnit } from '../types';
   import Modal from '../components/Modal.svelte';
+  import Icon from '../components/Icon.svelte';
 
   const defaultUnit: WeightUnit = $derived($settings.units === 'imperial' ? 'lb' : 'kg');
 
@@ -81,7 +82,7 @@
 
   {#if $routines.length === 0}
     <div class="empty card" style="padding:30px">
-      <div class="big">🏋️</div>
+      <div class="big"><Icon name="dumbbell" size={30} /></div>
       <div style="font-weight:600;color:var(--text)">No routines yet</div>
       <div class="muted" style="margin:6px 0 14px">Create one, or tick “Save as routine” while logging a workout.</div>
       <button class="btn btn-primary" onclick={newRoutine}>Create a routine</button>
@@ -94,7 +95,7 @@
             <div class="rname">{r.name}</div>
             <div class="rex">{r.exercises.map((e) => e.name).join(' · ') || 'No exercises'}</div>
           </div>
-          <button class="del" onclick={(e) => { e.stopPropagation(); remove(r); }} aria-label="Delete">🗑️</button>
+          <button class="del" onclick={(e) => { e.stopPropagation(); remove(r); }} aria-label="Delete"><Icon name="trash" size={17} /></button>
         </div>
       {/each}
     </div>

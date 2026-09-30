@@ -12,6 +12,7 @@
   import Modal from '../components/Modal.svelte';
   import NumberStepper from '../components/NumberStepper.svelte';
   import FoodForm from '../components/FoodForm.svelte';
+  import Icon from '../components/Icon.svelte';
   import { friendlyDate } from '../date';
 
   // Barcode scanner (and the heavy ZXing library) is loaded on demand.
@@ -169,12 +170,14 @@
 
   async function onScannedSave(f: Food) {
     scanConfirmOpen = false;
+    scannedFood = null;
     if (saveScanToLibrary) {
       await saveFood(f);
       await loadFoods();
     }
-    await commitEntry(f, 1);
-    scannedFood = null;
+    // Go to the quantity step instead of assuming one serving, so you can log
+    // "6" of something in one move.
+    openLog(f);
   }
 </script>
 
@@ -192,7 +195,7 @@
   <!-- Search + scan -->
   <div class="searchrow">
     <input placeholder="Search your foods…" bind:value={query} />
-    <button class="scanbtn" onclick={openScanner} aria-label="Scan barcode">📷</button>
+    <button class="scanbtn" onclick={openScanner} aria-label="Scan barcode"><Icon name="scan" size={22} /></button>
   </div>
 
   {#if scanBusy}

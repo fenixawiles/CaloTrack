@@ -108,7 +108,7 @@
       <span class="muted">kcal</span>
     </div>
     <button class="btn btn-ghost btn-block" style="margin-top:12px" onclick={() => (showCalc = !showCalc)}>
-      🧮 {showCalc ? 'Hide' : 'Help me estimate'} (TDEE)
+      {showCalc ? 'Hide' : 'Help me estimate'} (TDEE)
     </button>
 
     {#if showCalc}

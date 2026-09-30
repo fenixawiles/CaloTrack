@@ -5,6 +5,7 @@
   import { handleRedirectIfPresent } from './lib/whoop';
   import TabBar from './lib/components/TabBar.svelte';
   import Toasts from './lib/components/Toasts.svelte';
+  import Icon from './lib/components/Icon.svelte';
   import Today from './lib/views/Today.svelte';
   import Add from './lib/views/Add.svelte';
   import Foods from './lib/views/Foods.svelte';
@@ -26,7 +27,7 @@
     // Complete a WHOOP OAuth redirect, if we came back from one.
     const whoopStatus = await handleRedirectIfPresent($settings.whoop);
     if (whoopStatus === 'connected') {
-      toast('WHOOP connected 🎉', 'success');
+      toast('WHOOP connected', 'success');
       navigate('workouts');
     } else if (whoopStatus === 'error') {
       toast('WHOOP connection failed — check your settings.', 'error');
@@ -39,7 +40,7 @@
   {#if ready}
     {#if showBackupNudge}
       <div class="nudge">
-        <span>💾 It's been a while — a quick backup keeps your data safe.</span>
+        <span class="nlabel"><Icon name="download" size={16} /> It's been a while — a quick backup keeps your data safe.</span>
         <div class="nudge-actions">
           <button onclick={() => { showBackupNudge = false; navigate('settings'); }}>Back up</button>
           <button class="dismiss" onclick={() => (showBackupNudge = false)} aria-label="Dismiss">✕</button>
@@ -71,7 +72,7 @@
     <Toasts />
   {:else}
     <div class="boot">
-      <div class="logo">🍃</div>
+      <div class="logo"><span class="ring"></span></div>
       <div class="name">CaloTrack</div>
     </div>
   {/if}
@@ -115,7 +116,29 @@
     color: var(--text-dim);
   }
   .logo {
-    font-size: 52px;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 4px solid var(--ring-track);
+    border-top-color: var(--accent);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .nlabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
   .name {
     font-weight: 800;

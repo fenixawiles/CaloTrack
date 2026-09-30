@@ -3,10 +3,18 @@
   import { downloadBackup, restoreBackup } from '../backup';
   import type { Units, ThemePref } from '../types';
   import Modal from '../components/Modal.svelte';
+  import Icon from '../components/Icon.svelte';
   import { friendlyDate, toKey } from '../date';
   import { beginAuth, isConnected, clearTokens, redirectUri } from '../whoop';
 
   const APP_VERSION = '1.0.0';
+  const buildStamp = (() => {
+    try {
+      return new Date(__BUILD_TIME__).toLocaleString();
+    } catch {
+      return __BUILD_TIME__;
+    }
+  })();
 
   const oauthRedirect = redirectUri();
   const privacyUrl = `${redirectUri()}privacy.html`;
@@ -93,12 +101,12 @@
   <!-- Quick links -->
   <div class="section-title">Manage</div>
   <div class="card links">
-    <button class="link" onclick={() => navigate('goals')}><span>🎯 Goals & targets</span><span class="chev">›</span></button>
-    <button class="link" onclick={() => navigate('weight')}><span>⚖️ Weight tracking</span><span class="chev">›</span></button>
-    <button class="link" onclick={() => navigate('workouts')}><span>🏋️ Workouts</span><span class="chev">›</span></button>
-    <button class="link" onclick={() => navigate('routines')}><span>🔁 Routines</span><span class="chev">›</span></button>
-    <button class="link" onclick={() => navigate('foods')}><span>🍎 Food library</span><span class="chev">›</span></button>
-    <button class="link" onclick={() => navigate('trends')}><span>📈 Trends & history</span><span class="chev">›</span></button>
+    <button class="link" onclick={() => navigate('goals')}><span class="lk"><Icon name="target" size={18} /> Goals & targets</span><Icon name="chevron-right" size={18} /></button>
+    <button class="link" onclick={() => navigate('weight')}><span class="lk"><Icon name="gauge" size={18} /> Weight tracking</span><Icon name="chevron-right" size={18} /></button>
+    <button class="link" onclick={() => navigate('workouts')}><span class="lk"><Icon name="dumbbell" size={18} /> Workouts</span><Icon name="chevron-right" size={18} /></button>
+    <button class="link" onclick={() => navigate('routines')}><span class="lk"><Icon name="refresh" size={18} /> Routines</span><Icon name="chevron-right" size={18} /></button>
+    <button class="link" onclick={() => navigate('foods')}><span class="lk"><Icon name="apple" size={18} /> Food library</span><Icon name="chevron-right" size={18} /></button>
+    <button class="link" onclick={() => navigate('trends')}><span class="lk"><Icon name="trends" size={18} /> Trends & history</span><Icon name="chevron-right" size={18} /></button>
   </div>
 
   <!-- Exercise -->
@@ -182,8 +190,8 @@
       Your data lives only on this device. Export a backup regularly — especially before clearing your browser or switching phones.
     </p>
     <div class="row" style="gap:10px">
-      <button class="btn btn-primary" style="flex:1" onclick={doExport}>⬇️ Export backup</button>
-      <button class="btn btn-ghost" style="flex:1" onclick={pickFile}>⬆️ Import</button>
+      <button class="btn btn-primary" style="flex:1" onclick={doExport}><Icon name="download" size={18} /> Export backup</button>
+      <button class="btn btn-ghost" style="flex:1" onclick={pickFile}><Icon name="upload" size={18} /> Import</button>
     </div>
     <div class="spread small muted">
       <span>Last backup: {lastBackup}</span>
@@ -204,6 +212,7 @@
   <div class="section-title">About</div>
   <div class="card pad">
     <div class="spread"><span>CaloTrack</span><span class="muted">v{APP_VERSION}</span></div>
+    <div class="spread small muted" style="margin-top:6px"><span>Build</span><span>{buildStamp}</span></div>
     <p class="muted small" style="margin:10px 0 0">
       Free and yours. No accounts, no ads, no paywalls — every feature is here for good. Nutrition lookups come from the open
       <b>Open Food Facts</b> database. Missing a day is completely fine; consistency over time is what counts.
@@ -253,9 +262,17 @@
   .link:last-child {
     border-bottom: none;
   }
-  .chev {
+  .link :global(svg) {
     color: var(--text-faint);
-    font-size: 20px;
+  }
+  .lk {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    color: var(--text);
+  }
+  .lk :global(svg) {
+    color: var(--text-dim);
   }
   .seg {
     display: grid;

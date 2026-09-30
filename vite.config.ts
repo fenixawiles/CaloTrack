@@ -7,6 +7,9 @@ const BASE = '/CaloTrack/';
 
 export default defineConfig({
   base: BASE,
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+  },
   // Build into docs/ so GitHub Pages can serve it via "Deploy from a branch".
   build: {
     outDir: 'docs',
@@ -15,6 +18,11 @@ export default defineConfig({
   plugins: [
     svelte(),
     VitePWA({
+      // Self-destroying SW: ships a worker that unregisters itself and clears
+      // all caches. This purges stale code from already-installed iOS PWAs so
+      // they always load the latest build (offline caching is off for now —
+      // reliability first while the app stabilises).
+      selfDestroying: true,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {

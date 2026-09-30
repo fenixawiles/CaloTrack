@@ -13,6 +13,7 @@
   import { friendlyDate, todayKey } from '../date';
   import Modal from '../components/Modal.svelte';
   import WorkoutEditor from '../components/WorkoutEditor.svelte';
+  import Icon from '../components/Icon.svelte';
 
   let dayWorkouts = $state<Workout[]>([]);
   let history = $state<Workout[]>([]);
@@ -110,7 +111,7 @@
   function summary(w: Workout): string {
     const parts: string[] = [];
     if (w.exercises.length) parts.push(`${w.exercises.length} exercise${w.exercises.length > 1 ? 's' : ''}`);
-    if (w.caloriesBurned) parts.push(`🔥 ${w.caloriesBurned} kcal`);
+    if (w.caloriesBurned) parts.push(`${w.caloriesBurned} kcal burned`);
     return parts.join(' · ') || 'No details';
   }
 </script>
@@ -130,7 +131,7 @@
   <!-- WHOOP sync -->
   {#if whoopConnected}
     <button class="btn btn-ghost btn-block whoop" onclick={syncWhoop} disabled={syncing}>
-      {syncing ? 'Syncing…' : '⌚ Sync from WHOOP'}
+      {#if syncing}Syncing…{:else}<Icon name="refresh" size={18} /> Sync from WHOOP{/if}
     </button>
   {/if}
 
@@ -165,7 +166,7 @@
             <div class="wname">{w.name || 'Workout'}</div>
             <div class="wsum">{summary(w)}</div>
           </div>
-          <button class="del" onclick={(e) => { e.stopPropagation(); remove(w); }} aria-label="Delete">🗑️</button>
+          <button class="del" onclick={(e) => { e.stopPropagation(); remove(w); }} aria-label="Delete"><Icon name="trash" size={17} /></button>
         </div>
       {/each}
     </div>
@@ -179,7 +180,7 @@
         <button class="hrow" onclick={() => edit(w)}>
           <span class="hdate">{friendlyDate(w.date)}</span>
           <span class="hname">{w.name || 'Workout'}</span>
-          <span class="hburn">{w.caloriesBurned ? `🔥 ${w.caloriesBurned}` : ''}</span>
+          <span class="hburn">{w.caloriesBurned ? `${w.caloriesBurned} kcal` : ''}</span>
         </button>
       {/each}
     </div>

@@ -1,1 +1,25 @@
-if(!self.define){let e,n={};const i=(i,s)=>(i=new URL(i+".js",s).href,n[i]||new Promise(n=>{if("document"in self){const e=document.createElement("script");e.src=i,e.onload=n,document.head.appendChild(e)}else e=i,importScripts(i),n()}).then(()=>{let e=n[i];if(!e)throw new Error(`Module ${i} didn’t register its module`);return e}));self.define=(s,c)=>{const o=e||("document"in self?document.currentScript.src:"")||location.href;if(n[o])return;let r={};const d=e=>i(e,o),l={module:{uri:o},exports:r,require:d};n[o]=Promise.all(s.map(e=>l[e]||d(e))).then(e=>(c(...e),r))}}define(["./workbox-efbd304a"],function(e){"use strict";self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"registerSW.js",revision:"cbb29c052feab9b1fab90f5b218e2758"},{url:"privacy.html",revision:"1955d6d7b3e496940b453961b2eb6fc7"},{url:"index.html",revision:"829b84de2f6b59a410f009e81f61b70e"},{url:"favicon.svg",revision:"baceed0241657deef2b484be1d04092a"},{url:"icons/icon-maskable.svg",revision:"ea8b5287ac49bba6c92659901fbeae04"},{url:"icons/icon-512.png",revision:"49f4d502dbd452d51436dccdb05a9c54"},{url:"icons/icon-512-maskable.png",revision:"402772c002f7894a349a9bcc71b2c147"},{url:"icons/icon-192.png",revision:"0ddbe361eb519117525623ea90e765f6"},{url:"icons/apple-touch-icon.png",revision:"dd32c4c3b344e3204db02516955d65f4"},{url:"assets/index-D-1bl_xF.css",revision:null},{url:"assets/index-BcTBXxxu.js",revision:null},{url:"assets/BarcodeScanner-xUaIHy4Q.css",revision:null},{url:"assets/BarcodeScanner-C1f51mfP.js",revision:null},{url:"favicon.svg",revision:"baceed0241657deef2b484be1d04092a"},{url:"icons/apple-touch-icon.png",revision:"dd32c4c3b344e3204db02516955d65f4"},{url:"icons/icon-192.png",revision:"0ddbe361eb519117525623ea90e765f6"},{url:"icons/icon-512-maskable.png",revision:"402772c002f7894a349a9bcc71b2c147"},{url:"icons/icon-512.png",revision:"49f4d502dbd452d51436dccdb05a9c54"},{url:"manifest.webmanifest",revision:"d202e1e88b82ebf827675807475c9551"}],{}),e.cleanupOutdatedCaches(),e.registerRoute(new e.NavigationRoute(e.createHandlerBoundToURL("/CaloTrack/index.html"))),e.registerRoute(/^https:\/\/world\.openfoodfacts\.org\/.*/i,new e.NetworkFirst({cacheName:"openfoodfacts",plugins:[new e.ExpirationPlugin({maxEntries:500,maxAgeSeconds:2592e3}),new e.CacheableResponsePlugin({statuses:[0,200]})]}),"GET")});
+
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e) => {
+  self.registration.unregister()
+    .then(() => self.clients.matchAll())
+    .then((clients) => {
+      clients.forEach((client) => {
+        if (client instanceof WindowClient)
+          client.navigate(client.url);
+      });
+      return Promise.resolve();
+    })
+    .then(() => {
+      self.caches.keys().then((cacheNames) => {
+        Promise.all(
+          cacheNames.map((cacheName) => {
+            return self.caches.delete(cacheName);
+          }),
+        );
+      })
+    });
+});
+    

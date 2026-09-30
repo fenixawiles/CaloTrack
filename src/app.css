@@ -1,31 +1,34 @@
 :root {
-  /* Brand */
-  --brand: #0f766e;
-  --brand-strong: #0d5f58;
-  --brand-soft: #14b8a6;
-
-  /* Light theme (default) */
-  --bg: #f6f7f9;
+  /* Light theme (default) — restrained neutrals + one muted accent */
+  --bg: #fafafa;
   --bg-elev: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --text-dim: #64748b;
-  --text-faint: #94a3b8;
-  --accent: var(--brand);
-  --accent-text: #ffffff;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --success: #16a34a;
-  --warn: #d97706;
-  --ring-track: #e2e8f0;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.14);
+  --surface-2: #f4f4f5;
+  --border: #ececed;
+  --text: #1b1b1f;
+  --text-dim: #71717a;
+  --text-faint: #a1a1aa;
 
-  --radius: 16px;
+  --accent: #2f7d6a; /* muted evergreen, used sparingly */
+  --accent-weak: rgba(47, 125, 106, 0.12);
+  --accent-text: #ffffff;
+
+  /* Primary buttons: ink, for a calm minimalist look */
+  --btn-bg: #1b1b1f;
+  --btn-fg: #ffffff;
+
+  --danger: #b42318;
+  --danger-soft: #fdf1f0;
+  --success: #2f7d6a;
+  --warn: #92766a; /* muted, not alarming */
+  --ring-track: #ececed;
+
+  --shadow: none;
+  --shadow-lg: 0 8px 30px rgba(24, 24, 27, 0.12);
+
+  --radius: 14px;
   --radius-sm: 10px;
-  --tab-h: 62px;
+  --tab-h: 60px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
@@ -34,23 +37,30 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #0b1120;
-  --bg-elev: #111827;
-  --surface: #131c2e;
-  --surface-2: #1c2740;
-  --border: #24304a;
-  --text: #e7ecf3;
-  --text-dim: #9aa8bd;
-  --text-faint: #6b7a91;
-  --accent: #2dd4bf;
-  --accent-text: #052e2b;
-  --danger: #f87171;
-  --danger-soft: #2a1416;
-  --success: #4ade80;
-  --warn: #fbbf24;
-  --ring-track: #24304a;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 34px rgba(0, 0, 0, 0.5);
+  --bg: #0c0c0e;
+  --bg-elev: #151518;
+  --surface: #161619;
+  --surface-2: #1e1e22;
+  --border: #262629;
+  --text: #ededf0;
+  --text-dim: #9b9ba3;
+  --text-faint: #6a6a72;
+
+  --accent: #57b39c;
+  --accent-weak: rgba(87, 179, 156, 0.14);
+  --accent-text: #06231d;
+
+  --btn-bg: #ededf0;
+  --btn-fg: #161619;
+
+  --danger: #f0776a;
+  --danger-soft: #241413;
+  --success: #57b39c;
+  --warn: #b39a8c;
+  --ring-track: #262629;
+
+  --shadow: none;
+  --shadow-lg: 0 10px 34px rgba(0, 0, 0, 0.55);
 }
 
 * {

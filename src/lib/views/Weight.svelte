@@ -6,6 +6,7 @@
   import { kgToDisplay, displayToKg, weightUnitLabel, formatWeight } from '../units';
   import LineChart from '../components/LineChart.svelte';
   import Modal from '../components/Modal.svelte';
+  import Icon from '../components/Icon.svelte';
 
   let weights = $state<WeightRecord[]>([]);
 
@@ -76,7 +77,7 @@
 
   {#if weights.length === 0}
     <div class="empty card" style="padding:30px">
-      <div class="big">⚖️</div>
+      <div class="big"><Icon name="gauge" size={30} /></div>
       <div style="font-weight:600;color:var(--text)">No weigh-ins yet</div>
       <div class="muted" style="margin:6px 0 14px">Track weight at your own pace — daily, weekly, whenever.</div>
       <button class="btn btn-primary" onclick={openLog}>Log your weight</button>
@@ -87,8 +88,8 @@
       <div class="curnum">{formatWeight(latest!.value, unit)}</div>
       <div class="curmeta">
         {#if changeKg !== 0}
-          <span class:down={changeKg < 0} class:up={changeKg > 0}>
-            {changeKg < 0 ? '▼' : '▲'} {formatWeight(Math.abs(changeKg), unit)}
+          <span class="chg" class:down={changeKg < 0} class:up={changeKg > 0}>
+            <Icon name={changeKg < 0 ? 'chevron-down' : 'chevron-up'} size={14} /> {formatWeight(Math.abs(changeKg), unit)}
           </span>
           <span class="faint">since {friendlyDate(first!.date)}</span>
         {:else}
@@ -121,7 +122,7 @@
         <div class="wrow">
           <span>{friendlyDate(w.date)}</span>
           <span class="wval">{formatWeight(w.value, unit)}</span>
-          <button class="del" onclick={() => remove(w)} aria-label="Delete">🗑️</button>
+          <button class="del" onclick={() => remove(w)} aria-label="Delete"><Icon name="trash" size={17} /></button>
         </div>
       {/each}
     </div>
@@ -159,6 +160,11 @@
     display: flex;
     gap: 8px;
     justify-content: center;
+  }
+  .chg {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
   }
   .down {
     color: var(--success);

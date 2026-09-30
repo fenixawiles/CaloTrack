@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import Icon from './Icon.svelte';
 
   let {
     open = $bindable(false),
@@ -31,7 +32,7 @@
     <div class="grabber"></div>
     <div class="head">
       <h3>{title}</h3>
-      <button class="x" onclick={close} aria-label="Close">✕</button>
+      <button class="x" onclick={close} aria-label="Close"><Icon name="x" size={18} /></button>
     </div>
     <div class="body">
       {@render children?.()}

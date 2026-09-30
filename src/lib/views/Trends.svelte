@@ -12,6 +12,7 @@
   import { monthLabel, todayKey, monthKey } from '../date';
   import BarChart from '../components/BarChart.svelte';
   import Heatmap from '../components/Heatmap.svelte';
+  import Icon from '../components/Icon.svelte';
 
   let entries = $state<Entry[]>([]);
   let range = $state<30 | 90>(30);
@@ -36,7 +37,7 @@
 
   {#if entries.length === 0}
     <div class="empty card" style="padding:30px">
-      <div class="big">📈</div>
+      <div class="big"><Icon name="trends" size={30} /></div>
       <div style="font-weight:600;color:var(--text)">No data yet</div>
       <div class="muted" style="margin-top:4px">Log a few days and your trends will appear here.</div>
     </div>
@@ -111,7 +112,7 @@
     {/if}
 
     <button class="btn btn-ghost btn-block" style="margin-top:16px" onclick={() => navigate('weight')}>
-      ⚖️ View weight trend
+      <Icon name="gauge" size={18} /> View weight trend
     </button>
   {/if}
 </div>

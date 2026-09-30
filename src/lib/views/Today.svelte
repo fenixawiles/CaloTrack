@@ -22,17 +22,18 @@
   import CalorieRing from '../components/CalorieRing.svelte';
   import Modal from '../components/Modal.svelte';
   import NumberStepper from '../components/NumberStepper.svelte';
+  import Icon from '../components/Icon.svelte';
 
   let entries = $state<Entry[]>([]);
   let allEntries = $state<Entry[]>([]);
   let workouts = $state<Workout[]>([]);
   let loading = $state(true);
 
-  const meals: { id: MealType; label: string; icon: string }[] = [
-    { id: 'breakfast', label: 'Breakfast', icon: '🌅' },
-    { id: 'lunch', label: 'Lunch', icon: '☀️' },
-    { id: 'dinner', label: 'Dinner', icon: '🌙' },
-    { id: 'snack', label: 'Snacks', icon: '🍿' }
+  const meals: { id: MealType; label: string }[] = [
+    { id: 'breakfast', label: 'Breakfast' },
+    { id: 'lunch', label: 'Lunch' },
+    { id: 'dinner', label: 'Dinner' },
+    { id: 'snack', label: 'Snacks' }
   ];
 
   async function load() {
@@ -125,19 +126,19 @@
 <div class="page fade-in">
   <!-- Date navigator -->
   <div class="datenav">
-    <button onclick={goPrev} aria-label="Previous day">‹</button>
+    <button onclick={goPrev} aria-label="Previous day"><Icon name="chevron-left" size={20} /></button>
     <div class="dlabel">
       <div class="d">{friendlyDate($selectedDate)}</div>
       {#if !isToday($selectedDate)}
         <button class="jump" onclick={() => selectedDate.set(todayKey())}>Jump to today</button>
       {/if}
     </div>
-    <button onclick={goNext} disabled={isToday($selectedDate)} aria-label="Next day">›</button>
+    <button onclick={goNext} disabled={isToday($selectedDate)} aria-label="Next day"><Icon name="chevron-right" size={20} /></button>
   </div>
 
   {#if isFuture($selectedDate)}
     <div class="empty card" style="padding:28px">
-      <div class="big">🗓️</div>
+      <div class="big"><Icon name="calendar" size={30} /></div>
       That day hasn't happened yet.
     </div>
   {:else}
@@ -163,7 +164,7 @@
         <div class="bop">−</div>
         <div class="bcell">
           <div class="bval burn">{burned.toLocaleString()}</div>
-          <div class="blab">🔥 burned</div>
+          <div class="blab"><Icon name="flame" size={12} /> burned</div>
         </div>
         <div class="bop">=</div>
         <div class="bcell">
@@ -186,8 +187,8 @@
     </div>
 
     <div class="quickrow">
-      <button class="btn btn-primary" style="flex:1" onclick={() => addTo('snack')}>＋ Add food</button>
-      <button class="btn btn-ghost" style="flex:1" onclick={logWorkout}>🏋️ Log workout</button>
+      <button class="btn btn-primary" style="flex:1" onclick={() => addTo('snack')}><Icon name="plus" size={18} /> Add food</button>
+      <button class="btn btn-ghost" style="flex:1" onclick={logWorkout}><Icon name="dumbbell" size={18} /> Log workout</button>
     </div>
     <button class="btn btn-ghost btn-block copy" onclick={copyYesterday}>Copy yesterday's food</button>
 
@@ -195,8 +196,8 @@
     {#if workouts.length > 0}
       <div class="meal card workoutcard">
         <div class="meal-head">
-          <span>🏋️ Workouts</span>
-          {#if burned > 0}<span class="mcal">🔥 {burned.toLocaleString()} kcal</span>{/if}
+          <span class="mh"><Icon name="dumbbell" size={16} /> Workouts</span>
+          {#if burned > 0}<span class="mcal">{burned.toLocaleString()} kcal</span>{/if}
         </div>
         {#each workouts as w (w.id)}
           <button class="entry" onclick={logWorkout}>
@@ -215,7 +216,7 @@
       <div class="empty">Loading…</div>
     {:else if entries.length === 0}
       <div class="empty card" style="padding:30px">
-        <div class="big">🍽️</div>
+        <div class="big"><Icon name="today" size={30} /></div>
         <div style="font-weight:600;color:var(--text)">No entries yet {isToday($selectedDate) ? 'today' : 'this day'}</div>
         <div class="muted" style="margin-top:4px">Add something whenever you're ready — no pressure.</div>
       </div>
@@ -226,7 +227,7 @@
           {#if list.length > 0}
             <div class="meal card">
               <div class="meal-head">
-                <span>{m.icon} {m.label}</span>
+                <span>{m.label}</span>
                 <span class="mcal">{sumCalories(list).toLocaleString()} kcal</span>
               </div>
               {#each list as e (e.id)}
@@ -356,6 +357,15 @@
   .blab {
     font-size: 11px;
     color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .mh {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
   }
   .bop {
     font-size: 18px;

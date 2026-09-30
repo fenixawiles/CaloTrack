@@ -61,7 +61,7 @@
 <div class="stack">
   <div>
     <label>Name</label>
-    <input bind:value={name} placeholder="e.g. Greek yogurt" autofocus />
+    <input bind:value={name} placeholder="e.g. Greek yogurt" />
   </div>
   <div>
     <label>Brand <span class="faint">(optional)</span></label>
@@ -85,7 +85,7 @@
   </div>
 
   {#if food?.barcode}
-    <div class="pill">🏷️ Barcode {food.barcode}</div>
+    <div class="pill">Barcode {food.barcode}</div>
   {/if}
 
   {#if showMacros}
