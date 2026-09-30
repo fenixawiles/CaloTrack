@@ -85,9 +85,12 @@ let toastId = 0;
 export function toast(message: string, kind: Toast['kind'] = 'info') {
   const id = ++toastId;
   toasts.update((t) => [...t, { id, message, kind }]);
-  setTimeout(() => {
-    toasts.update((t) => t.filter((x) => x.id !== id));
-  }, 3200);
+  setTimeout(
+    () => {
+      toasts.update((t) => t.filter((x) => x.id !== id));
+    },
+    kind === 'error' ? 7000 : 3200
+  );
 }
 
 export function navigate(to: Route) {

@@ -44,43 +44,71 @@ const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<CaloTrackDB>> | null = null;
 
+function openWithTimeout(): Promise<IDBPDatabase<CaloTrackDB>> {
+  const open = openDB<CaloTrackDB>(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      buildStores(db);
+    },
+    blocked() {
+      // Another tab holds an older version open, blocking the upgrade.
+      console.warn('IndexedDB upgrade blocked by another open tab.');
+    },
+    blocking() {
+      // We are blocking another tab's upgrade — close so it can proceed.
+      // (Handled per-connection below.)
+    },
+    terminated() {
+      dbPromise = null; // allow re-open after unexpected close (iOS can do this)
+    }
+  });
+
+  // Some WebKit/iOS states leave open() pending forever (e.g. a blocked
+  // version change). Fail loudly instead of leaving writes hanging silently.
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Storage is taking too long to open. Close other CaloTrack tabs and reload.')), 10000)
+  );
+
+  return Promise.race([open, timeout]).catch((err) => {
+    dbPromise = null; // let the next call retry
+    throw err;
+  });
+}
+
 export function getDB(): Promise<IDBPDatabase<CaloTrackDB>> {
-  if (!dbPromise) {
-    dbPromise = openDB<CaloTrackDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('foods')) {
-          const foods = db.createObjectStore('foods', { keyPath: 'id' });
-          foods.createIndex('byName', 'name');
-          foods.createIndex('byBarcode', 'barcode');
-        }
-        if (!db.objectStoreNames.contains('entries')) {
-          const entries = db.createObjectStore('entries', { keyPath: 'id' });
-          entries.createIndex('byDate', 'date');
-          entries.createIndex('byFood', 'foodId');
-        }
-        if (!db.objectStoreNames.contains('weights')) {
-          const weights = db.createObjectStore('weights', { keyPath: 'id' });
-          weights.createIndex('byDate', 'date');
-        }
-        if (!db.objectStoreNames.contains('goals')) {
-          const goals = db.createObjectStore('goals', { keyPath: 'id' });
-          goals.createIndex('byActiveFrom', 'activeFrom');
-        }
-        if (!db.objectStoreNames.contains('workouts')) {
-          const workouts = db.createObjectStore('workouts', { keyPath: 'id' });
-          workouts.createIndex('byDate', 'date');
-        }
-        if (!db.objectStoreNames.contains('routines')) {
-          const routines = db.createObjectStore('routines', { keyPath: 'id' });
-          routines.createIndex('byName', 'name');
-        }
-        if (!db.objectStoreNames.contains('settings')) {
-          db.createObjectStore('settings', { keyPath: 'id' });
-        }
-      }
-    });
-  }
+  if (!dbPromise) dbPromise = openWithTimeout();
   return dbPromise;
+}
+
+function buildStores(db: IDBPDatabase<CaloTrackDB>) {
+  if (!db.objectStoreNames.contains('foods')) {
+    const foods = db.createObjectStore('foods', { keyPath: 'id' });
+    foods.createIndex('byName', 'name');
+    foods.createIndex('byBarcode', 'barcode');
+  }
+  if (!db.objectStoreNames.contains('entries')) {
+    const entries = db.createObjectStore('entries', { keyPath: 'id' });
+    entries.createIndex('byDate', 'date');
+    entries.createIndex('byFood', 'foodId');
+  }
+  if (!db.objectStoreNames.contains('weights')) {
+    const weights = db.createObjectStore('weights', { keyPath: 'id' });
+    weights.createIndex('byDate', 'date');
+  }
+  if (!db.objectStoreNames.contains('goals')) {
+    const goals = db.createObjectStore('goals', { keyPath: 'id' });
+    goals.createIndex('byActiveFrom', 'activeFrom');
+  }
+  if (!db.objectStoreNames.contains('workouts')) {
+    const workouts = db.createObjectStore('workouts', { keyPath: 'id' });
+    workouts.createIndex('byDate', 'date');
+  }
+  if (!db.objectStoreNames.contains('routines')) {
+    const routines = db.createObjectStore('routines', { keyPath: 'id' });
+    routines.createIndex('byName', 'name');
+  }
+  if (!db.objectStoreNames.contains('settings')) {
+    db.createObjectStore('settings', { keyPath: 'id' });
+  }
 }
 
 export function uid(): string {
